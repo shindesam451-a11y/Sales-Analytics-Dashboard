@@ -1,5 +1,5 @@
-# Sales-Analytics-Dashboard
-# 📊 Accenture Sales Analytics Dashboard
+
+# 📊 Sales Analytics Intelligence Platform
 
 A modern, interactive sales analytics dashboard for Accenture company projects. Real-time visualization of sales performance metrics with interactive charts and comprehensive analytics.
 
