@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accenture Sales Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 5px;
+        }
+        
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-card .value {
+            color: #667eea;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .chart-card h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2em;
+        }
+        
+        canvas {
+            max-width: 100%;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Accenture Sales Analytics Dashboard</h1>
+            <p>Real-time Sales Performance Metrics</p>
+        </header>
+        
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Sales</h3>
+                <div class="value" id="totalSales">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <div class="value" id="totalQuantity">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Average Sale</h3>
+                <div class="value" id="avgSale">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Regions</h3>
+                <div class="value" id="regions">Loading...</div>
+            </div>
+            <div class="stat-card">
+                <h3>Service Lines</h3>
+                <div class="value" id="services">Loading...</div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Sales by Region</h3>
+                <canvas id="regionChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Sales by Service</h3>
+                <canvas id="serviceChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Daily Sales Trend</h3>
+                <canvas id="dailyChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Top Performing Regions</h3>
+                <canvas id="topChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const colors = {primary:'#667eea', secondary:'#764ba2', success:'#48bb78', warning:'#f6ad55', danger:'#f56565'};
+        async function loadStats() { const res = await fetch('/api/stats'); const data = await res.json(); document.getElementById('totalSales').textContent = data.total_sales; document.getElementById('totalQuantity').textContent = data.total_quantity; document.getElementById('avgSale').textContent = data.avg_sale; document.getElementById('regions').textContent = data.regions; document.getElementById('services').textContent = data.services; }
+        async function loadCharts() {
+            const regionRes = await fetch('/api/sales-by-region'); const regionData = await regionRes.json();
+            new Chart(document.getElementById('regionChart'), { type: 'bar', data: { labels: Object.keys(regionData), datasets: [{label: 'Sales', data: Object.values(regionData), backgroundColor: colors.primary}] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+            const serviceRes = await fetch('/api/sales-by-service'); const serviceData = await serviceRes.json();
+            new Chart(document.getElementById('serviceChart'), { type: 'doughnut', data: { labels: Object.keys(serviceData), datasets: [{data: Object.values(serviceData), backgroundColor: [colors.primary, colors.secondary, colors.success, colors.warning]}] }, options: { responsive: true } });
+            const dailyRes = await fetch('/api/daily-sales'); const dailyData = await dailyRes.json();
+            new Chart(document.getElementById('dailyChart'), { type: 'line', data: { labels: Object.keys(dailyData), datasets: [{label: 'Daily Sales', data: Object.values(dailyData), borderColor: colors.primary, backgroundColor: 'rgba(102, 126, 234, 0.1)', fill: true, tension: 0.4}] }, options: { responsive: true, plugins: { legend: { display: true } } } });
+            const topRes = await fetch('/api/top-performers'); const topData = await topRes.json();
+            new Chart(document.getElementById('topChart'), { type: 'bar', data: { labels: Object.keys(topData), datasets: [{label: 'Sales', data: Object.values(topData), backgroundColor: colors.secondary}] }, options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false } } } });
+        }
+        loadStats(); loadCharts();
+    </script>
+</body>
+</html>
